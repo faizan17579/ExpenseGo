@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { CreditCard, BarChart3, PieChart, Wallet, TrendingUp, DollarSign } from "lucide-react";
+import image1 from '../assets/front.jpg';
 
 const Mainpage: React.FC = () => {
   return (
@@ -80,7 +81,7 @@ const Mainpage: React.FC = () => {
           {/* Placeholder Image */}
           <div className="relative h-[400px] w-full rounded-xl overflow-hidden shadow-2xl transform perspective-1000 rotate-y-6 hover:rotate-y-0 transition-transform duration-500">
             <img
-              src="https://drive.google.com/file/d/1fdlzCuN95OIuNyIriGFi6aj1a-50OeFP/view?usp=sharing"
+              src={image1}
               alt="3D Expense Tracking Visualization"
               className="object-cover w-full h-full"
             />
