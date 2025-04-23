@@ -80,7 +80,7 @@ const Mainpage: React.FC = () => {
           {/* Placeholder Image */}
           <div className="relative h-[400px] w-full rounded-xl overflow-hidden shadow-2xl transform perspective-1000 rotate-y-6 hover:rotate-y-0 transition-transform duration-500">
             <img
-              src="./src/assets/front.jpg"
+              src="/src/components/front.jpg"
               alt="3D Expense Tracking Visualization"
               className="object-cover w-full h-full"
             />
