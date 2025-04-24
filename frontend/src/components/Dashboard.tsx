@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Pie, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title } from 'chart.js';
-
+const backendUrl = "https://expense-go-ten.vercel.app";
 // Register ChartJS components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title);
 
@@ -72,7 +72,7 @@ const Dashboard: React.FC = () => {
         }
         setUser(JSON.parse(userData));
 
-        const expensesResponse = await fetch('http://localhost:5000/api/expenses/fetch', {
+        const expensesResponse = await fetch(`${backendUrl}/api/expenses/fetch`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -83,7 +83,7 @@ const Dashboard: React.FC = () => {
         const expensesData = await expensesResponse.json();
         setExpenses(expensesData);
 
-        const budgetsResponse = await fetch('http://localhost:5000/api/budgets/fetch', {
+        const budgetsResponse = await fetch(`${backendUrl}/api/budgets/fetch`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
