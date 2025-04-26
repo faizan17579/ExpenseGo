@@ -5,7 +5,7 @@ export const createExpense = async (req, res) => {
       const { title, amount, category, description, budgetName } = req.body;
   
       console.log(req.body);
-      if (!title || !amount || !category || !description || !budgetName) {
+      if (!title || !amount || !category || !budgetName) {
         return res.status(400).json({ message: "All fields are required" });
       }
   

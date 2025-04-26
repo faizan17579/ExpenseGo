@@ -176,7 +176,7 @@ const AddBudget: React.FC = () => {
                     Budget Amount
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-2 text-slate-500 dark:text-slate-400 text-sm">₹</span>
+                    <span className="absolute left-3 top-2 text-slate-500 dark:text-slate-400 text-sm">Rs </span>
                     <input
                       type="number"
                       id="amount"

@@ -99,6 +99,8 @@ const AddExpense: React.FC = () => {
       }
 
       setSuccess(true);
+      // Dispatch event to notify dashboard of new expense
+      window.dispatchEvent(new Event('expenseUpdated'));
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
@@ -257,7 +259,7 @@ const AddExpense: React.FC = () => {
                     Amount
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-2 text-slate-500 dark:text-slate-400 text-sm">₹</span>
+                    <span className="absolute left-3 top-2 text-slate-500 dark:text-slate-400 text-sm">Rs </span>
                     <input
                       type="number"
                       id="amount"
@@ -304,7 +306,7 @@ const AddExpense: React.FC = () => {
                     ) : (
                       budgets.map((budget) => (
                         <option key={budget._id} value={budget._id}>
-                          {budget.category} (₹{budget.remaining.toFixed(2)} remaining)
+                          {budget.category} (Rs {budget.remaining.toFixed(2)} remaining)
                         </option>
                       ))
                     )}
