@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { CreditCard, BarChart3, PieChart, Wallet, TrendingUp, DollarSign } from "lucide-react";
-const backendUrl = "https://expense-go-ten.vercel.app";
+
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,7 +24,7 @@ const Login: React.FC = () => {
     setSuccessMessage('');
 
     try {
-      const response = await fetch(`${backendUrl}/api/users/login`, {
+      const response = await fetch('http://localhost:5000/api/users/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

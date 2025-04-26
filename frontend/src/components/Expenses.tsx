@@ -228,7 +228,7 @@ const Expenses: React.FC = () => {
 
                   <div className="flex justify-between items-center">
                     <span className="text-lg sm:text-2xl font-bold text-red-600 dark:text-red-400">
-                      -₹{expense.amount.toFixed(2)}
+                      -Rs {expense.amount.toFixed(2)}
                     </span>
                   </div>
                 </div>

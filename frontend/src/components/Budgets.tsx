@@ -231,13 +231,13 @@ const Budgets: React.FC = () => {
                     <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-slate-600 dark:text-slate-300">Total Budget</span>
                       <span className="font-medium text-slate-900 dark:text-white">
-                        ₹{(budget.amount || 0).toFixed(2)}
+                        Rs {(budget.amount || 0).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-slate-600 dark:text-slate-300">Remaining</span>
                       <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                        ₹{(budget.remaining || 0).toFixed(2)}
+                        Rs {(budget.remaining || 0).toFixed(2)}
                       </span>
                     </div>
                     <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 sm:h-2">

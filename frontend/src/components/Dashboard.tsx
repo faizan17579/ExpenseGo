@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Pie, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title } from 'chart.js';
-const backendUrl = "https://expense-go-ten.vercel.app";
+
 // Register ChartJS components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title);
 
@@ -56,53 +56,65 @@ const Dashboard: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          navigate('/login');
-          return;
-        }
-
-        const userData = localStorage.getItem('user');
-        if (!userData) {
-          navigate('/login');
-          return;
-        }
-        setUser(JSON.parse(userData));
-
-        const expensesResponse = await fetch(`${backendUrl}/api/expenses/fetch`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        if (!expensesResponse.ok) {
-          throw new Error('Failed to fetch expenses');
-        }
-        const expensesData = await expensesResponse.json();
-        setExpenses(expensesData);
-
-        const budgetsResponse = await fetch(`${backendUrl}/api/budgets/fetch`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        if (!budgetsResponse.ok) {
-          throw new Error('Failed to fetch budgets');
-        }
-        const budgetsData = await budgetsResponse.json();
-        setBudgets(budgetsData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setError('Failed to load data. Please try again.');
-      } finally {
-        setLoading(false);
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
       }
-    };
 
+      const userData = localStorage.getItem('user');
+      if (!userData) {
+        navigate('/login');
+        return;
+      }
+      setUser(JSON.parse(userData));
+
+      const expensesResponse = await fetch('http://localhost:5000/api/expenses/fetch', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!expensesResponse.ok) {
+        throw new Error('Failed to fetch expenses');
+      }
+      const expensesData = await expensesResponse.json();
+      setExpenses(expensesData);
+
+      const budgetsResponse = await fetch('http://localhost:5000/api/budgets/fetch', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!budgetsResponse.ok) {
+        throw new Error('Failed to fetch budgets');
+      }
+      const budgetsData = await budgetsResponse.json();
+      setBudgets(budgetsData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setError('Failed to load data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, [navigate]);
+
+  // Add event listener for expense updates
+  useEffect(() => {
+    const handleExpenseUpdate = () => {
+      fetchData();
+    };
+
+    window.addEventListener('expenseUpdated', handleExpenseUpdate);
+    return () => {
+      window.removeEventListener('expenseUpdated', handleExpenseUpdate);
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -289,14 +301,7 @@ const Dashboard: React.FC = () => {
             <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />
             Budget
           </Link>
-          <Link
-            to="/analytics"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors"
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
-            Analytics
-          </Link>
+        
           <Link
             to="/settings"
             className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors"
@@ -355,7 +360,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Total Budget</p>
-                <p className="text-base sm:text-xl font-bold text-slate-800 dark:text-white">₹{totalBudget.toFixed(2)}</p>
+                <p className="text-base sm:text-xl font-bold text-slate-800 dark:text-white">Rs {totalBudget.toFixed(2)}</p>
               </div>
             </div>
           </div>
@@ -367,7 +372,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Remaining Budget</p>
-                <p className="text-base sm:text-xl font-bold text-slate-800 dark:text-white">₹{remainingBudget.toFixed(2)}</p>
+                <p className="text-base sm:text-xl font-bold text-slate-800 dark:text-white">Rs {remainingBudget.toFixed(2)}</p>
               </div>
             </div>
           </div>
@@ -379,7 +384,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Total Expenses</p>
-                <p className="text-base sm:text-xl font-bold text-slate-800 dark:text-white">₹{totalExpenses.toFixed(2)}</p>
+                <p className="text-base sm:text-xl font-bold text-slate-800 dark:text-white">Rs {totalExpenses.toFixed(2)}</p>
               </div>
             </div>
           </div>
@@ -417,7 +422,7 @@ const Dashboard: React.FC = () => {
                               const value = data.datasets[0].data[index] as number;
                               const bgColor = data.datasets[0].backgroundColor[index];
                               return {
-                                text: `${label} - ₹${value.toFixed(2)}`,
+                                text: `${label} - Rs ${value.toFixed(2)}`,
                                 fillStyle: bgColor,
                                 strokeStyle: bgColor,
                                 lineWidth: 0,
@@ -442,7 +447,7 @@ const Dashboard: React.FC = () => {
                           const value = context.raw as number;
                           const total = context.dataset.data.reduce((acc: number, curr: number) => acc + curr, 0);
                           const percentage = ((value / total) * 100).toFixed(1);
-                          return ` ₹${value.toFixed(2)} (${percentage}%)`;
+                          return ` Rs ${value.toFixed(2)} (${percentage}%)`;
                         },
                       },
                     },
@@ -481,7 +486,7 @@ const Dashboard: React.FC = () => {
                       },
                       ticks: {
                         color: '#64748B',
-                        callback: (value) => typeof value === 'number' ? `₹${value}` : value,
+                        callback: (value) => typeof value === 'number' ? ` Rs ${value}` : value,
                         font: { size: 9 },
                       },
                     },
@@ -518,30 +523,33 @@ const Dashboard: React.FC = () => {
                 No recent expenses. Add an expense to get started.
               </p>
             ) : (
-              expenses.slice(0, 5).map((expense) => (
-                <div
-                  key={expense._id}
-                  className="flex flex-col p-2 sm:p-3 bg-slate-50/50 dark:bg-slate-700/50 rounded-lg backdrop-blur gap-1 sm:gap-2"
-                >
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="bg-red-100 dark:bg-red-900 p-1 sm:p-2 rounded-full">
-                      <ArrowDownRight className="h-3 w-3 sm:h-4 sm:w-4 text-red-600 dark:text-red-400" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-xs sm:text-sm text-slate-800 dark:text-white">{expense.title}</p>
-                      <div className="flex items-center gap-1 sm:gap-2 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
-                        <Calendar className="h-3 w-3" />
-                        <span>{formatDate(expense.createdAt)}</span>
-                        <span className="hidden sm:inline">•</span>
-                        <span>{expense.budgetName || expense.category || 'Uncategorized'}</span>
+              [...expenses]
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .slice(0, 5)
+                .map((expense) => (
+                  <div
+                    key={expense._id}
+                    className="flex flex-col p-2 sm:p-3 bg-slate-50/50 dark:bg-slate-700/50 rounded-lg backdrop-blur gap-1 sm:gap-2"
+                  >
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="bg-red-100 dark:bg-red-900 p-1 sm:p-2 rounded-full">
+                        <ArrowDownRight className="h-3 w-3 sm:h-4 sm:w-4 text-red-600 dark:text-red-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-xs sm:text-sm text-slate-800 dark:text-white">{expense.title}</p>
+                        <div className="flex items-center gap-1 sm:gap-2 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
+                          <Calendar className="h-3 w-3" />
+                          <span>{formatDate(expense.createdAt)}</span>
+                          <span className="hidden sm:inline">•</span>
+                          <span>{expense.budgetName || expense.category || 'Uncategorized'}</span>
+                        </div>
                       </div>
                     </div>
+                    <p className="font-semibold text-red-600 dark:text-red-400 text-xs sm:text-sm text-right">
+                      - Rs {expense.amount.toFixed(2)}
+                    </p>
                   </div>
-                  <p className="font-semibold text-red-600 dark:text-red-400 text-xs sm:text-sm text-right">
-                    -₹{expense.amount.toFixed(2)}
-                  </p>
-                </div>
-              ))
+                ))
             )}
           </div>
         </div>
