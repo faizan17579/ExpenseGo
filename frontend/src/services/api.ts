@@ -1,7 +1,7 @@
 import { getToken } from '../utils/auth';
 import { hashPassword } from '../utils/crypto';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://13.234.38.210:5000';
 
 interface LoginData {
   email: string;
@@ -14,8 +14,7 @@ interface SignupData extends LoginData {
 
 interface ApiResponse<T> {
   success: boolean;
-  data?: T;
-  error?: string;
+  data?: T;  error?: string;
 }
 
 const handleResponse = async <T>(response: Response): Promise<ApiResponse<T>> => {
