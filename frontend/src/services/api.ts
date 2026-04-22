@@ -1,7 +1,4 @@
-import { getToken } from '../utils/auth';
-import { hashPassword } from '../utils/crypto';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://13.234.38.210:5000';
+export const API_URL ="http://13.234.38.210:5000/api";
 
 interface LoginData {
   email: string;
@@ -12,64 +9,134 @@ interface SignupData extends LoginData {
   name: string;
 }
 
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;  error?: string;
+export interface AuthUser {
+  _id?: string;
+  id?: string;
+  name: string;
+  email: string;
 }
 
-const handleResponse = async <T>(response: Response): Promise<ApiResponse<T>> => {
-  const data = await response.json();
-  
-  if (!response.ok) {
-    throw new Error(data.error || 'Something went wrong');
-  }
-  
-  return data;
+export interface Budget {
+  _id: string;
+  amount: number;
+  category: string;
+  createdAt: string;
+  expiryDate: string;
+  remaining: number;
+}
+
+export interface Expense {
+  _id: string;
+  title: string;
+  amount: number;
+  createdAt: string;
+  budgetId: string;
+  budgetName?: string;
+  category: string;
+  description: string;
+}
+
+interface LoginResponse {
+  message: string;
+  person: AuthUser;
+  token: string;
+}
+
+interface SignupResponse {
+  message: string;
+  person: AuthUser;
+}
+
+const decodeHtmlEntities = (value: string): string => {
+  return value
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ');
 };
 
-export const login = async (credentials: LoginData): Promise<ApiResponse<{ token: string }>> => {
-  // Hash password before sending
-  const hashedPassword = await hashPassword(credentials.password);
-  
-  const response = await fetch(`${API_URL}/auth/login`, {
+const extractHtmlError = (html: string): string => {
+  const preMatch = html.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+  const source = preMatch ? preMatch[1] : html;
+
+  return decodeHtmlEntities(source)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+const handleResponse = async <T>(response: Response): Promise<T> => {
+  const contentType = response.headers.get('content-type') || '';
+  const rawText = await response.text();
+
+  let parsedData: any = null;
+  if (rawText) {
+    try {
+      parsedData = JSON.parse(rawText);
+    } catch {
+      parsedData = null;
+    }
+  }
+
+  if (!response.ok) {
+    const messageFromJson = parsedData?.message || parsedData?.error;
+    const messageFromText = rawText && !contentType.includes('application/json')
+      ? extractHtmlError(rawText).slice(0, 220)
+      : '';
+
+    throw new Error(
+      messageFromJson ||
+      messageFromText ||
+      `Request failed with status ${response.status}`
+    );
+  }
+
+  if (parsedData !== null) {
+    return parsedData as T;
+  }
+
+  // Some endpoints may return empty bodies for success.
+  return {} as T;
+};
+
+export const login = async (credentials: LoginData): Promise<LoginResponse> => {
+  const response = await fetch(`${API_URL}/users/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       ...credentials,
-      password: hashedPassword
     }),
   });
 
-  return handleResponse(response);
+  return handleResponse<LoginResponse>(response);
 };
 
-export const signup = async (userData: SignupData): Promise<ApiResponse<{ token: string }>> => {
-  // Hash password before sending
-  const hashedPassword = await hashPassword(userData.password);
-  
-  const response = await fetch(`${API_URL}/auth/signup`, {
+export const signup = async (userData: SignupData): Promise<SignupResponse> => {
+  const response = await fetch(`${API_URL}/users/signup`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       ...userData,
-      password: hashedPassword
     }),
   });
 
-  return handleResponse(response);
+  return handleResponse<SignupResponse>(response);
 };
 
 // Protected API calls
 const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
-  const token = getToken();
-  
+  const token = localStorage.getItem('token');
+
   const headers = {
     ...options.headers,
-    'Authorization': `Bearer ${token}`,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
   const response = await fetch(url, { ...options, headers });
@@ -83,22 +150,68 @@ const authFetch = async (url: string, options: RequestInit = {}): Promise<Respon
   return response;
 };
 
-// Example of a protected API call
-export const addExpense = async (expenseData: FormData): Promise<ApiResponse<any>> => {
-  const response = await authFetch(`${API_URL}/expenses`, {
+export const fetchExpenses = async (): Promise<Expense[]> => {
+  const response = await authFetch(`${API_URL}/expenses/fetch`);
+  return handleResponse<Expense[]>(response);
+};
+
+export const fetchBudgets = async (): Promise<Budget[]> => {
+  const response = await authFetch(`${API_URL}/budgets/fetch`);
+  return handleResponse<Budget[]>(response);
+};
+
+export const addExpense = async (expenseData: {
+  title: string;
+  amount: number;
+  category: string;
+  description: string;
+  budgetName: string;
+}): Promise<Expense> => {
+  const response = await authFetch(`${API_URL}/expenses/add`, {
     method: 'POST',
-    body: expenseData,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(expenseData),
   });
 
-  return handleResponse(response);
+  return handleResponse<Expense>(response);
 };
 
-export const getExpenses = async (): Promise<ApiResponse<any[]>> => {
-  const response = await authFetch(`${API_URL}/expenses`);
-  return handleResponse(response);
+export const deleteExpense = async (id: string): Promise<{ message: string }> => {
+  const response = await authFetch(`${API_URL}/expenses/delete/${id}`, {
+    method: 'DELETE',
+  });
+
+  return handleResponse<{ message: string }>(response);
 };
 
-export const getBudgetSummary = async (): Promise<ApiResponse<any>> => {
+export const addBudget = async (budgetData: {
+  amount: number;
+  category: string;
+  createdAt: string;
+  expiryDate: string;
+}): Promise<Budget> => {
+  const response = await authFetch(`${API_URL}/budgets/add`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(budgetData),
+  });
+
+  return handleResponse<Budget>(response);
+}; 
+
+export const deleteBudget = async (id: string): Promise<{ message: string }> => {
+  const response = await authFetch(`${API_URL}/budgets/delete/${id}`, {
+    method: 'DELETE',
+  });
+
+  return handleResponse<{ message: string }>(response);
+};
+
+export const getBudgetSummary = async () => {
   const response = await authFetch(`${API_URL}/budget/summary`);
   return handleResponse(response);
-}; 
+};

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Pie, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title } from 'chart.js';
+import { fetchBudgets, fetchExpenses } from '../services/api';
 
 // Register ChartJS components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title);
@@ -33,7 +34,7 @@ interface Expense {
   amount: number;
   createdAt: string;
   budgetId: string;
-  budgetName: string;
+  budgetName?: string;
   category: string;
   description: string;
 }
@@ -71,26 +72,12 @@ const Dashboard: React.FC = () => {
       }
       setUser(JSON.parse(userData));
 
-      const expensesResponse = await fetch('http://localhost:5000/api/expenses/fetch', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (!expensesResponse.ok) {
-        throw new Error('Failed to fetch expenses');
-      }
-      const expensesData = await expensesResponse.json();
-      setExpenses(expensesData);
+      const [expensesData, budgetsData] = await Promise.all([
+        fetchExpenses(),
+        fetchBudgets(),
+      ]);
 
-      const budgetsResponse = await fetch('http://localhost:5000/api/budgets/fetch', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (!budgetsResponse.ok) {
-        throw new Error('Failed to fetch budgets');
-      }
-      const budgetsData = await budgetsResponse.json();
+      setExpenses(expensesData);
       setBudgets(budgetsData);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -417,10 +404,14 @@ const Dashboard: React.FC = () => {
                         boxHeight: 6,
                         generateLabels: (chart) => {
                           const data = chart.data;
-                          if (data.labels && data.datasets) {
+                          const dataset = data.datasets[0];
+                          if (data.labels && dataset) {
                             return data.labels.map((label, index) => {
-                              const value = data.datasets[0].data[index] as number;
-                              const bgColor = data.datasets[0].backgroundColor[index];
+                              const value = dataset.data[index] as number;
+                              const backgroundColor = dataset.backgroundColor;
+                              const bgColor = Array.isArray(backgroundColor)
+                                ? backgroundColor[index]
+                                : '#6B7280';
                               return {
                                 text: `${label} - Rs ${value.toFixed(2)}`,
                                 fillStyle: bgColor,

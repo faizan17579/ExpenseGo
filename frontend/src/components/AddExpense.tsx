@@ -13,6 +13,7 @@ import {
   Menu,
   X,
 } from 'lucide-react';
+import { addExpense, fetchBudgets } from '../services/api';
 
 interface Budget {
   _id: string;
@@ -47,14 +48,9 @@ const AddExpense: React.FC = () => {
   ];
 
   useEffect(() => {
-    const fetchBudgets = async () => {
+    const loadBudgets = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/budgets/fetch', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        const data = await response.json();
+        const data = await fetchBudgets();
         setBudgets(data);
         if (data.length > 0) {
           setSelectedBudget(data[0]._id);
@@ -64,7 +60,7 @@ const AddExpense: React.FC = () => {
       }
     };
 
-    fetchBudgets();
+    loadBudgets();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,26 +73,13 @@ const AddExpense: React.FC = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/expenses/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          title,
-          amount: parseFloat(amount),
-          date,
-          category,
-          description,
-          budgetName: selectedBudget,
-        }),
+      await addExpense({
+        title,
+        amount: parseFloat(amount),
+        category,
+        description,
+        budgetName: selectedBudget,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add expense');
-      }
 
       setSuccess(true);
       // Dispatch event to notify dashboard of new expense

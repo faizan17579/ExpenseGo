@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, CreditCard, Edit2, Trash2, Calendar, DollarSign, BarChart3, PieChart, TrendingUp, Menu, X } from 'lucide-react';
+import { deleteExpense, fetchExpenses } from '../services/api';
 
 interface Expense {
   _id: string;
@@ -21,19 +22,9 @@ const Expenses: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const fetchExpenses = async () => {
+    const loadExpenses = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/expenses/fetch', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch expenses');
-        }
-
-        const data = await response.json();
+        const data = await fetchExpenses();
         setExpenses(data);
       } catch (error) {
         console.error('Error fetching expenses:', error);
@@ -43,7 +34,7 @@ const Expenses: React.FC = () => {
       }
     };
 
-    fetchExpenses();
+    loadExpenses();
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -52,16 +43,7 @@ const Expenses: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/expenses/delete/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete expense');
-      }
+      await deleteExpense(id);
 
       setExpenses(expenses.filter(expense => expense._id !== id));
     } catch (error) {

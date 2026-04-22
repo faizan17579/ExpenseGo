@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Wallet, Edit2, Trash2, Menu, X, DollarSign, BarChart3, PieChart, TrendingUp } from 'lucide-react';
+import { deleteBudget, fetchBudgets } from '../services/api';
 
 interface Budget {
   _id: string;
@@ -19,19 +20,9 @@ const Budgets: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const fetchBudgets = async () => {
+    const loadBudgets = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/budgets/fetch', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch budgets');
-        }
-
-        const data = await response.json();
+        const data = await fetchBudgets();
         setBudgets(data);
       } catch (error) {
         console.error('Error fetching budgets:', error);
@@ -41,7 +32,7 @@ const Budgets: React.FC = () => {
       }
     };
 
-    fetchBudgets();
+    loadBudgets();
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -50,16 +41,7 @@ const Budgets: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/budgets/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete budget');
-      }
+      await deleteBudget(id);
 
       setBudgets(budgets.filter(budget => budget._id !== id));
     } catch (error) {

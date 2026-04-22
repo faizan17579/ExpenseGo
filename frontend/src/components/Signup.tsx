@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CreditCard, BarChart3, PieChart, Wallet, TrendingUp, DollarSign } from "lucide-react";
+import { BarChart3, PieChart, Wallet, TrendingUp, DollarSign } from "lucide-react";
+import { signup } from '../services/api';
 
 const Signup: React.FC = () => {
   const [name, setName] = useState('');
@@ -21,19 +22,7 @@ const Signup: React.FC = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/users/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Signup failed');
-      }
+      await signup({ name, email, password });
 
       // Redirect to login page on success
       navigate('/login', { state: { message: 'Signup successful! Please login.' } });
@@ -75,6 +64,11 @@ const Signup: React.FC = () => {
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white dark:bg-slate-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded-md">
+                {error}
+              </div>
+            )}
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">

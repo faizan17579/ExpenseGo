@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, DollarSign, BarChart3, PieChart, TrendingUp, Menu, X, Wallet } from 'lucide-react';
+import { addBudget } from '../services/api';
 
 const AddBudget: React.FC = () => {
   const navigate = useNavigate();
@@ -25,24 +26,12 @@ const AddBudget: React.FC = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/budgets/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          amount: parseFloat(amount),
-          category: name,
-          createdAt: startDate,
-          expiryDate: endDate,
-        }),
+      await addBudget({
+        amount: parseFloat(amount),
+        category: name,
+        createdAt: startDate,
+        expiryDate: endDate,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add budget');
-      }
 
       setSuccess(true);
       setTimeout(() => {
