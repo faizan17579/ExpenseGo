@@ -1,0 +1,44 @@
+name: Simple Dev Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. SSH into EC2 and deploy
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+
+            echo "📁 Going to app directory"
+            cd ExpenseGo
+
+            echo "⬇️ Pulling latest code"
+            git pull
+
+            # ---------------- BACKEND ----------------
+            echo "🔧 Restart backend"
+            cd backend
+            npm install
+            pm2 restart backend || pm2 start index.js --name backend
+
+            # ---------------- FRONTEND ----------------
+            echo "🎨 Restart frontend dev server"
+            cd ../frontend
+            npm install
+
+            pm2 restart frontend || pm2 start npm --name frontend -- run dev -- --host 0.0.0.0 --port 3000
+
+            echo "✅ Done!"
